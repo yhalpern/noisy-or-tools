@@ -1,0 +1,4 @@
+gobnilp/outputfile/adjacencymatrix="<probname>.bn_mat"
+gobnilp/outputfile/dot="<probname>.dot"
+gobnilp/outputfile/scoreandtime="<probname>.scoreandtime"
+gobnilp/outputfile/solution=""

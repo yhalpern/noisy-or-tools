@@ -377,7 +377,7 @@ for b in xrange(bootstrap):
               print >>outfile,  l, o, tree.failures[l,o]
 
   for o in sorted(tree.observations, key=lambda o: tree.noise[o]):
-      print >>outfile, 'noise', o, tree.noise[o]
+      print >>outfile, 'noise', o, float(tree.noise[o])
 
   outfile.close()
 

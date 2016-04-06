@@ -1,0 +1,5 @@
+*.o
+*.pyc
+*.svn*
+sampling/read_ss
+sampling/sample_ss

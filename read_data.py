@@ -76,6 +76,7 @@ if __name__ == "__main__":
 
     infile = file(networkdir+'/'+'data')
     header = infile.readline().strip().split(' ')
+    print 'header', header
     inv_header = dict(zip(header, xrange(len(header))))
     try:
         labels= pickle.load(file(networkdir+'/pickles/labels.pk'))
@@ -86,17 +87,15 @@ if __name__ == "__main__":
 
     counter = parallel_execute_query([(l,) for l in labels], networkdir,sample_size, len(header), 10)
 
-    labels.sort(key=lambda l: counter[(l,)][1], reverse=True)
+    #labels.sort(key=lambda l: counter[(l,)][1], reverse=True)
     print 'labels', [header[i] for i in labels]
     #labels = filter(lambda l: counter[(l,)][1] > 50, labels)
     MAX_LABELS = int(networkdir.split('-')[1])
     labels = labels[:MAX_LABELS]
-    labels.sort()
+    #labels.sort()
 
-    try:
-        anchors =[header.index('header_'+header[t]) for t in labels]
-    except:
-        anchors =[header.index('header_'+header[t].replace('label_', 'anchor_')) for t in labels]
+    anchor_dict = pickle.load(file(networkdir+'/pickles/anchor_dict.pk'))
+    anchors =[anchor_dict[t] for t in labels]
 
     if 'learned_anchors' in networkdir:
         learned_anchors = init_anchors(networkdir, labels, header, anchors)
@@ -106,9 +105,10 @@ if __name__ == "__main__":
     counter = parallel_execute_query([(a,) for a in anchors]+learned_anchors.values(), networkdir, sample_size, len(header), 10)
 
 
-    labels = filter(lambda t: counter[header.index('header_'+header[t].replace('label_','anchor_')),][1], labels)
+    #labels = filter(lambda t: counter[header.index('header_'+header[t].replace('label_','anchor_')),][1], labels)
 
-    anchors =[header.index('header_'+header[t].replace('label_','anchor_')) for t in labels]
+    #anchors =[header.index('header_'+header[t].replace('label_','anchor_')) for t in labels]
+    #anchors =[anchor_dict[t] for t in labels]
 
     if 'anchor_baseline' in prog_args:
         labels = anchors

@@ -39,9 +39,4 @@ def recovery_test():
   else:
     print "FAIL"
 
-  #outfile = h5py.File('data.h5', 'w')
-  #outfile.create_dataset('Y', data=Y_matrix)
-  #outfile.create_dataset('X', data=X_matrix)
-  #outfile.close()
-
 recovery_test()

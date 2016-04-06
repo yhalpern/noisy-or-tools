@@ -22,13 +22,15 @@ def recovery_no_noise_test():
   priors[-1] = 1
   Y_matrix = np.matrix(np.random.rand(n_data , n_parents+1) < np.tile(priors, (n_data,1)), dtype=int)
   X_matrix = np.array(generate_x(Y_matrix, failures))
-  Y_matrix = np.array(Y_matrix)
+  Y_matrix = np.array(Y_matrix[:, :-1])
   X_matrix = np.array(X_matrix)
+  print 'X shape', X_matrix.shape
   X_names = ['child_'+str(i) for i in xrange(n_children)]
   Y_names = ['parent_'+str(i) for i in xrange(n_parents)]
   noise = {}
-  args = [str(n_parents)]+' opt kl simplex indep constreg simple'.split() +  ['G1000', 'N'+str(n_parents), 'S0']
+  args = [str(n_parents)]+' opt kl simplex indep constreg simple'.split() +  ['G1000', 'N'+str(X_matrix.shape[0]), 'S0']
   learner = MOMLearner(X_matrix, X_names, Y_matrix, Y_names, noise, args)
-  learner.learn_failures()
+  learned_failures = learner.learn_failures()
+  return np.abs(learned_failures - np.exp(failures)).sum()
 
-recovery_no_noise_test()
+print recovery_no_noise_test()
