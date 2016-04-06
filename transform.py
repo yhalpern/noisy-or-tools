@@ -1,7 +1,6 @@
 from __future__ import division
 import hashlib
 from gurobipy import *
-from cycleInequalities import cycle_sep
 from ExponetiatedGradient import expGrad
 import ast
 import time
@@ -11,7 +10,6 @@ import numpy as np
 from itertools import combinations, product
 import itertools
 import sys
-from FrankWolf import FW
 #from L1_minimization import L1_minimization
 from helpers import *
 from utils import extractOrder

@@ -8,7 +8,6 @@ import cPickle as pickle
 import itertools
 from copy import deepcopy
 from multiprocessing import Pool
-from FrankWolf import FW
 from helpers import *
 import scipy.optimize as opt 
 from helpers import extract_edges, create_CPD, get_counts

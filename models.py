@@ -5,7 +5,7 @@ import numpy as np
 import sys
 from helpers import *
 import time
-from VariableElimination import eliminate
+#from VariableElimination import eliminate
 import compute_bic_score
 import os
 
@@ -418,68 +418,6 @@ class TreeModel:
         return np.clip(p, 10**(-9), 1-10**(-9))
 
     def estimateCrossEdges(self, method='moments-general', min_fail=0, max_fail=1, do_checks=False, ignore_correction=False, min_noise=1.0):
-        if method=='moments-general':
-            top_sort = sorted(self.latents, key=lambda l: self.depth[l], reverse=True)
-            for L in top_sort:
-                print '-'*20
-                print "latent variable ", L
-                P = list(self.parents_of[L]) #ASSUME THERE IS ONLY 1 parent
-                for X in self.observations:
-                    if X in self.anchors.values():
-                        continue
-
-                    print 'looking at child', X
-                    
-                    if len(P):
-                        parent_condition = max(itertools.product([0,1], repeat=len(P)), key = lambda cond: self.prob(zip(P, cond)))
-                        parent_condition = zip(P, parent_condition)
-                        print 'conditioning on parents = ', parent_condition
-                    else:
-                        print 'no parents'
-                        parent_condition = []
-                        
-                    f_num = self.prob([(X,0)], condition=[(L,1)]+parent_condition) 
-                    f_denom = self.prob([(X,0)], condition=[(L,0)]+ parent_condition)
-                    
-                    if np.isnan(f_num) or np.isnan(f_denom):
-                        self.failures[(L,X)] = 1.0
-                        continue
-
-                    f = f_num / f_denom
-
-
-                    print 'ratio', f
-                    D = self.descendants(L) 
-                    print 'subtracting off prior influence of descendants and coparents', D
-                    num_correction = self.general_correction(L,1,D,X, explicit_check=do_checks)
-                    denom_correction = self.general_correction(L,0,D,X, explicit_check=do_checks)
-
-        
-                    print 'correction', num_correction , '/', denom_correction, '=', num_correction / denom_correction
-
-                    f /= num_correction 
-                    f *= denom_correction
-
-                    print 'res', f
-
-                    if f < max_fail:
-                        self.failures[(L,X)] = f
-                    else:
-                        self.failures[(L,X)] = 1.0
-
-
-            L = self.root
-            for X in self.observations:
-                if X in self.anchors.values():
-                    continue
-                #self.noise[X] =  self.prob([(X,0)]) / self.evaluateProb((X,0))
-                a = self.prob([(X,0)])
-                b = self.general_correction(self.root, slice(None), self.descendants(self.root), X).dot(self.CPD[self.root])
-                print X
-                print 'a', a
-                print 'b', b
-                self.noise[X] =  a/b
-
         if method=='moments-tree':
             for L in self.latents:
                 print 'latent variable', L
@@ -616,72 +554,6 @@ class TreeModel:
         corr = prod([message[L,L0] for L in self.children_of[L0]])
         return corr[L0_val]
 
-
-    def general_correction(self,L0,L0_val,D,X, explicit_check=False):
-
-        #computes \sum_{Y in D} P(Y|L0=L0_val) P \prod_{Yk in D} f_k^{y_k}
-        #corrosponds to prob(X=0) after accounting for (Y in D) and knowing that L0=L0_val
-                
-        if not len(D): #L0 is a leaf node
-            return np.array([1.0, 1.0])[L0_val]
-        
-        if explicit_check:
-            print 'explicit check, correcting for', D
-            check_val = 0
-            for D_val in itertools.product([0,1], repeat=len(D)):
-                temp = self.prob(X=zip(D, D_val), condition=[(L0, L0_val)])
-                print '\t', temp,
-                for d in xrange(len(D)):
-                    if D_val[d] == 1:
-                        temp  *= self.failures[D[d],X]
-                print temp
-                check_val += temp
-            print check_val
-
-        factors = []
-        latents = set()
-        for d in D:
-            latents.add(d)
-            latents |= set(self.parents_of[d])
-
-            factors.append([[d]+list(self.parents_of[d]), self.CPD[d]])
-            factors.append([[d], np.array([1, self.failures[d,X]])])
-
-        latents.discard(L0)
-        #print 'eliminate', factors
-
-        top_sort = sorted(latents, key=lambda l: self.depth[l], reverse=True)
-        for L in top_sort:
-            if L == L0:
-                continue
-
-            print 'eliminating', L
-            factors = eliminate(L, factors)
-
-        #print 'the remaining factors are', factors
-        #print 'they should only have', L0
-        ret = factors[0][1]
-
-        for f in factors[1:]:
-            ret *= f[1]
-
-        for r in ret:
-            assert r < 1 + 1e-6, 'how can a correction be > 1? :'+str(r)
-        #check = self.tree_correction(L0,L0_val,D,X)
-        #assert np.abs(ret[L0_val] - check) < 10**(-6), str(ret[L0_val]) + ' not equal ' + str(check)
-        if type(L0) is int:
-            assert ret[L0_val].size == 1 
-        
-
-
-        if explicit_check:
-            try:
-                assert ret[L0_val] == check_val, "failed check "+str(ret[L0_val])+"!="+str(check_val)
-            except:
-                print 'failed check', ret[L0_val], '!=', check_val
-                return check_val
-
-        return ret[L0_val]
 
     def createAdjustment(self, X):
         n = len(X)
